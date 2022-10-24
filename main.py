@@ -3,6 +3,7 @@ import math
 import re
 from subprocess import Popen
 from os import name
+import sys
 
 from prawcore import ResponseException
 
@@ -75,9 +76,16 @@ def shutdown():
         print("Exiting...")
         exit()
 
+
 if __name__ == "__main__":
     config = settings.check_toml("utils/.config.template.toml", "config.toml")
     config is False and exit()
+    # overwrite sub and posts in config
+    print(sys.argv)
+    if sys.argv[1]:
+        config["reddit"]["thread"]["subreddit"] = sys.argv[1]
+    if sys.argv[2]:
+        config["reddit"]["thread"]["post_id"] = sys.argv[2]
     try:
         if config["settings"]["times_to_run"]:
             run_many(config["settings"]["times_to_run"])
