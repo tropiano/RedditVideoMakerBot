@@ -49,6 +49,7 @@ def make_final_video(
     length: int,
     reddit_obj: dict,
     background_config: Tuple[str, str, str, Any],
+    iteration: int
 ):
     """Gathers audio clips, gathers all screenshots, stitches them together and saves the final video to assets/temp
     Args:
@@ -76,7 +77,8 @@ def make_final_video(
     )
 
     # Gather all audio clips
-    audio_clips = [AudioFileClip(f"assets/temp/{id}/mp3/{i}.mp3") for i in range(number_of_clips)]
+    audio_clips = [AudioFileClip(
+        f"assets/temp/{id}/mp3/{i}.mp3") for i in range(number_of_clips)]
     audio_clips.insert(0, AudioFileClip(f"assets/temp/{id}/mp3/title.mp3"))
     audio_concat = concatenate_audioclips(audio_clips)
     audio_composite = CompositeAudioClip([audio_concat])
@@ -85,8 +87,10 @@ def make_final_video(
     # add title to video
     image_clips = []
     # Gather all images
-    new_opacity = 1 if opacity is None or float(opacity) >= 1 else float(opacity)
-    new_transition = 0 if transition is None or float(transition) > 2 else float(transition)
+    new_opacity = 1 if opacity is None or float(
+        opacity) >= 1 else float(opacity)
+    new_transition = 0 if transition is None or float(
+        transition) > 2 else float(transition)
     image_clips.insert(
         0,
         ImageClip(f"assets/temp/{id}/png/title.png")
@@ -126,7 +130,7 @@ def make_final_video(
     title = re.sub(r"[^\w\s-]", "", reddit_obj["thread_title"])
     idx = re.sub(r"[^\w\s-]", "", reddit_obj["thread_id"])
 
-    filename = f"{name_normalize(title)[:251]}.mp4"
+    filename = f"{name_normalize(title)[:251]}_{iteration}.mp4"
     subreddit = settings.config["reddit"]["thread"]["subreddit"]
 
     if not exists(f"./results/{subreddit}"):
@@ -142,7 +146,7 @@ def make_final_video(
     #    final.set_audio(final_audio)
     final = Video(final).add_watermark(
         text=f"Background credit: {background_config[2]}", opacity=0.4, redditid=reddit_obj
-     )
+    )
     final.write_videofile(
         f"assets/temp/{id}/temp.mp4",
         fps=30,
