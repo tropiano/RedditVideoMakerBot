@@ -42,7 +42,7 @@ print_markdown(
 checkversion(__VERSION__)
 
 
-def main(POST_ID=None):
+def main(POST_ID=None, iteration=1):
     reddit_object = get_subreddit_threads(POST_ID)
     global redditid
     redditid = id(reddit_object)
@@ -52,7 +52,8 @@ def main(POST_ID=None):
     bg_config = get_background_config()
     download_background(bg_config)
     chop_background_video(bg_config, length, reddit_object)
-    make_final_video(number_of_comments, length, reddit_object, bg_config)
+    make_final_video(number_of_comments, length,
+                     reddit_object, bg_config, iteration)
 
 
 def run_many(times):
@@ -60,7 +61,7 @@ def run_many(times):
         print_step(
             f'on the {x}{("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")[x % 10]} iteration of {times}'
         )  # correct 1st 2nd 3rd 4th 5th....
-        main()
+        main(iteration=x)
         Popen("cls" if name == "nt" else "clear", shell=True).wait()
 
 
