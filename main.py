@@ -42,7 +42,7 @@ print_markdown(
 checkversion(__VERSION__)
 
 
-def main(POST_ID=None):
+def main(POST_ID=None, iteration=1):
     reddit_object = get_subreddit_threads(POST_ID)
     global redditid
     redditid = id(reddit_object)
@@ -52,7 +52,8 @@ def main(POST_ID=None):
     bg_config = get_background_config()
     download_background(bg_config)
     chop_background_video(bg_config, length, reddit_object)
-    make_final_video(number_of_comments, length, reddit_object, bg_config)
+    make_final_video(number_of_comments, length,
+                     reddit_object, bg_config, iteration)
 
 
 def run_many(times):
@@ -60,7 +61,7 @@ def run_many(times):
         print_step(
             f'on the {x}{("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")[x % 10]} iteration of {times}'
         )  # correct 1st 2nd 3rd 4th 5th....
-        main()
+        main(iteration=x)
         Popen("cls" if name == "nt" else "clear", shell=True).wait()
 
 
@@ -80,8 +81,15 @@ def shutdown():
 if __name__ == "__main__":
     assert sys.version_info >= (3, 9), "Python 3.10 or higher is required"
     directory = Path().absolute()
-    config = settings.check_toml(f"{directory}/utils/.config.template.toml", "config.toml")
+    config = settings.check_toml(
+        f"{directory}/utils/.config.template.toml", "config.toml")
     config is False and exit()
+    # overwrite sub and posts in config
+    print(sys.argv)
+    if sys.argv[1]:
+        config["reddit"]["thread"]["subreddit"] = sys.argv[1]
+    if sys.argv[2]:
+        config["reddit"]["thread"]["post_id"] = sys.argv[2]
     try:
         if len(config["reddit"]["thread"]["post_id"].split("+")) > 1:
             for index, post_id in enumerate(config["reddit"]["thread"]["post_id"].split("+")):
@@ -103,8 +111,9 @@ if __name__ == "__main__":
         print_markdown("Please check your credentials in the config.toml file")
 
         shutdown()
-    except Exception as err :
-        
-        print_step('looks like some thing gone wrong in testing builts it happens report on us discord')
+    except Exception as err:
+
+        print_step(
+            'looks like some thing gone wrong in testing builts it happens report on us discord')
         raise err
         # todo error

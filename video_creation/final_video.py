@@ -21,7 +21,7 @@ from utils.videos import save_data
 from utils import settings
 
 console = Console()
-W, H = 1080,1920
+W, H = 1080, 1920
 
 
 def name_normalize(name: str) -> str:
@@ -50,6 +50,7 @@ def make_final_video(
     length: int,
     reddit_obj: dict,
     background_config: Tuple[str, str, str, Any],
+    iteration: int
 ):
     """Gathers audio clips, gathers all screenshots, stitches them together and saves the final video to assets/temp
     Args:
@@ -75,20 +76,23 @@ def make_final_video(
         .resize(height=H)
         .crop(x1=1166.6, y1=0, x2=2246.6, y2=1920)
     )
-    
+
     # Gather all audio clips
     if settings.config["settings"]["storymode"]:
         if settings.config["settings"]["storymodemethod"] == 0:
             audio_clips = [AudioFileClip(f"assets/temp/{id}/mp3/title.mp3")]
-            audio_clips.insert(1,AudioFileClip(f"assets/temp/{id}/mp3/postaudio.mp3"))
+            audio_clips.insert(1, AudioFileClip(
+                f"assets/temp/{id}/mp3/postaudio.mp3"))
         elif settings.config["settings"]["storymodemethod"] == 1:
-            #here work is not done14
-            audio_clips = [AudioFileClip(f"assets/temp/{id}/mp3/postaudio-{i}.mp3") \
-                    for i in track(range(number_of_clips+1),"Collecting the audio files...")]
-            audio_clips.insert(0, AudioFileClip(f"assets/temp/{id}/mp3/title.mp3"))
-                
+            # here work is not done14
+            audio_clips = [AudioFileClip(f"assets/temp/{id}/mp3/postaudio-{i}.mp3") for i in track(
+                range(number_of_clips+1), "Collecting the audio files...")]
+            audio_clips.insert(0, AudioFileClip(
+                f"assets/temp/{id}/mp3/title.mp3"))
+
     else:
-        audio_clips = [AudioFileClip(f"assets/temp/{id}/mp3/{i}.mp3") for i in range(number_of_clips)]
+        audio_clips = [AudioFileClip(
+            f"assets/temp/{id}/mp3/{i}.mp3") for i in range(number_of_clips)]
         audio_clips.insert(0, AudioFileClip(f"assets/temp/{id}/mp3/title.mp3"))
     audio_concat = concatenate_audioclips(audio_clips)
     audio_composite = CompositeAudioClip([audio_concat])
@@ -97,8 +101,10 @@ def make_final_video(
     # add title to video
     image_clips = []
     # Gather all images
-    new_opacity = 1 if opacity is None or float(opacity) >= 1 else float(opacity)
-    new_transition = 0 if transition is None or float(transition) > 2 else float(transition)
+    new_opacity = 1 if opacity is None or float(
+        opacity) >= 1 else float(opacity)
+    new_transition = 0 if transition is None or float(
+        transition) > 2 else float(transition)
     image_clips.insert(
         0,
         ImageClip(f"assets/temp/{id}/png/title.png")
@@ -110,26 +116,27 @@ def make_final_video(
     )
     if settings.config["settings"]["storymode"]:
         if settings.config["settings"]["storymodemethod"] == 0:
-            if os.path.exists(f"assets/temp/{id}/png/story_content.png"):# else: story mode stuff
+            # else: story mode stuff
+            if os.path.exists(f"assets/temp/{id}/png/story_content.png"):
                 image_clips.insert(
-                1,
-                ImageClip(f"assets/temp/{id}/png/story_content.png")
-                .set_duration(audio_clips[1].duration)
-                .set_position("center")
-                .resize(width=W - 100)
-                .set_opacity(float(opacity)),
-            )
+                    1,
+                    ImageClip(f"assets/temp/{id}/png/story_content.png")
+                    .set_duration(audio_clips[1].duration)
+                    .set_position("center")
+                    .resize(width=W - 100)
+                    .set_opacity(float(opacity)),
+                )
         elif settings.config["settings"]["storymodemethod"] == 1:
-                for i in track(range(0, number_of_clips+1),"Collecting the image files..."):
-                    image_clips.append(
-                        ImageClip(f"assets/temp/{id}/png/img{i}.png")
-                        .set_duration(audio_clips[i + 1].duration)
-                        .resize(width=W - 100)
-                        .set_opacity(new_opacity)
-                        # .crossfadein(new_transition)
-                        # .crossfadeout(new_transition)
-            )
-    else :
+            for i in track(range(0, number_of_clips+1), "Collecting the image files..."):
+                image_clips.append(
+                    ImageClip(f"assets/temp/{id}/png/img{i}.png")
+                    .set_duration(audio_clips[i + 1].duration)
+                    .resize(width=W - 100)
+                    .set_opacity(new_opacity)
+                    # .crossfadein(new_transition)
+                    # .crossfadeout(new_transition)
+                )
+    else:
         for i in range(0, number_of_clips):
             image_clips.append(
                 ImageClip(f"assets/temp/{id}/png/comment_{i}.png")
@@ -139,9 +146,7 @@ def make_final_video(
                 .crossfadein(new_transition)
                 .crossfadeout(new_transition)
             )
-    
-    
-    
+
     img_clip_pos = background_config[3]
     image_concat = concatenate_videoclips(image_clips).set_position(
         img_clip_pos
@@ -151,7 +156,7 @@ def make_final_video(
     title = re.sub(r"[^\w\s-]", "", reddit_obj["thread_title"])
     idx = re.sub(r"[^\w\s-]", "", reddit_obj["thread_id"])
 
-    filename = f"{name_normalize(title)[:251]}.mp4"
+    filename = f"{name_normalize(title)[:251]}_{iteration}.mp4"
     subreddit = settings.config["reddit"]["thread"]["subreddit"]
 
     if not exists(f"./results/{subreddit}"):
@@ -165,13 +170,11 @@ def make_final_video(
     #    # lowered_audio = audio_background.multiply_volume( # todo get this to work
     #    #    VOLUME_MULTIPLIER)  # lower volume by background_audio_volume, use with fx
     #    final.set_audio(final_audio)
-    # if 
+    # if
     final = Video(final).add_watermark(
         text=f"Background credit: {background_config[2]}", opacity=0.4, redditid=reddit_obj
-     )
-    
+    )
 
-   
     final.write_videofile(
         f"assets/temp/{id}/temp.mp4",
         fps=30,
@@ -185,11 +188,12 @@ def make_final_video(
         0,
         length,
         targetname=f"results/{subreddit}/{filename}",
-    ) 
+    )
     save_data(subreddit, filename, title, idx, background_config[2])
     print_step("Removing temporary files 🗑")
     cleanups = cleanup(id)
     print_substep(f"Removed {cleanups} temporary files 🗑")
     print_substep("See result in the results folder!")
 
-    print_step(f'Reddit title: {reddit_obj["thread_title"]} \n Background Credit: {background_config[2]}')
+    print_step(
+        f'Reddit title: {reddit_obj["thread_title"]} \n Background Credit: {background_config[2]}')
